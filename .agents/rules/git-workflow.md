@@ -10,4 +10,4 @@ When starting work on any task (e.g., T0.1, S-1), NEVER commit directly to the `
 2. Implement the task in this branch.
 3. Commit using **Conventional Commits** format (e.g., `feat: [T0.1] add monorepo structure`, `chore: update .gitignore`, `fix: resolve conflict`).
 4. Push the branch to the remote repository.
-5. (If applicable) Create a Pull Request for QA/Review before merging.
+5. STOP. Do not create or merge the Pull Request yourself. Notify the user that the branch is ready. The creation and merging of Pull Requests is ALWAYS handled by the HUMAN user.
