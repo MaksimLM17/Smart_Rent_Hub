@@ -161,3 +161,54 @@ bash infra/keycloak/verify-keycloak.sh
 - Успешное получение JWT-токена персоналом через `srh-staff` с ролями `CATALOG_EDITOR` и `ADMIN`.
 - Успешное получение сервисного токена через `srh-service-client` (Client Credentials).
 
+---
+
+## 5. Kafka (KRaft) и Kafka Connect с Debezium (T1.4)
+
+### Apache Kafka (KRaft)
+- **Образ**: `apache/kafka:3.9.0`
+- **Режим**: KRaft (без ZooKeeper)
+- **Порты**:
+  - `9092` (внутренний брокер для сервисов Docker)
+  - `9094` (внешний доступ с хоста для инструментов и тестов)
+- **Именованный том**: `srh_kafka_data`
+
+### Kafka Connect с Debezium
+- **Образ**: `debezium/connect:2.7.3.Final`
+- **Порт**: `8083` (REST API управления коннекторами)
+- **Предустановленный плагин**: `io.debezium.connector.postgresql.PostgresConnector`
+- **Трансформация Outbox**: встроенный `io.debezium.transforms.outbox.EventRouter` (SDD 5.3)
+
+### Коннекторы CDC Outbox (`infra/debezium/connectors/`)
+Готовые конфигурации для сервисов платформы:
+- `booking-outbox.json` (публикация событий заказов в топики `booking.*`)
+- `inventory-outbox.json` (события каталога и единиц `inventory.*`)
+- `payments-outbox.json` (события платежей `payments.*`)
+- `risk-outbox.json` (события проверок рисков `risk.*`)
+- `notification-outbox.json` (события уведомлений)
+- `finance-outbox.json` (финансовые транзакции)
+
+### Регистрация коннекторов
+Скрипты автоматически дожидаются готовности Kafka Connect REST API и идемпотентно регистрируют коннекторы:
+- Для Windows: `powershell -ExecutionPolicy Bypass -File infra/debezium/register-connectors.ps1`
+- Для Linux: `bash infra/debezium/register-connectors.sh`
+
+### Проверка Kafka и Kafka Connect
+
+Для Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/debezium/verify-kafka-connect.ps1
+```
+
+Для Linux / macOS / WSL:
+```bash
+bash infra/debezium/verify-kafka-connect.sh
+```
+
+Скрипт проверяет:
+- Доступность Kafka Connect REST API.
+- Загрузку плагина `io.debezium.connector.postgresql.PostgresConnector`.
+- Автоматическую регистрацию коннектора `booking-outbox` (и остальных).
+- Статус зарегистрированных коннекторов.
+
+

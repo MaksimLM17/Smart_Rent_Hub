@@ -88,7 +88,7 @@ flowchart LR
 | T1.1 | Compose `core`: PostgreSQL с `wal_level=logical`, init-скрипты (БД и пользователи на сервис: `booking`, `inventory`, `payments`, `risk`, `notification`, `ai`, `finance`, плюс `keycloak`, `litellm`; отдельный пользователь `debezium`) | M | БД созданы, права разделены (владелец схемы и пользователь приложения) | [x] Выполнено |
 | T1.2 | Redis и MinIO (инициализация бакетов `handover-photos`, `acts`, `catalog-media`) | S | Бакеты есть, доступ по тестовым ключам | [x] Выполнено |
 | T1.3 | Keycloak: realm `smartrent` как код (импорт при старте), клиенты `srh-customer`, `srh-staff`, роли из PRD 3.2, тестовые пользователи | M | Импорт идемпотентен; под тестовыми пользователями получается токен с ролями | [x] Выполнено |
-| T1.4 | Kafka (KRaft) + Kafka Connect с Debezium, скрипт регистрации коннекторов | M | Connect отвечает, плагин Debezium загружен | |
+| T1.4 | Kafka (KRaft) + Kafka Connect с Debezium, скрипт регистрации коннекторов | M | Connect отвечает, плагин Debezium загружен | [x] Выполнено |
 | T1.5 | Каркас `external-stubs` (Spring Boot, заглушки SMS и банковского ID с управляемыми сценариями) | S | Приложение запускается, SMS «отправляется» в лог и в тестовый эндпойнт | |
 | T1.6 | Профиль `obs`: OTel Collector, Jaeger, Prometheus, Grafana, Loki, Alloy | L | Дашборды открываются, тестовое приложение видно в Jaeger, метриках и логах | |
 | T1.7 | Скрипты запуска для Windows (PowerShell): `up`, `down`, `reset`, выбор профилей | S | Команды описаны в README и работают из обычного терминала | |
