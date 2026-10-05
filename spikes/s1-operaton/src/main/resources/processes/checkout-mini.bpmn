@@ -57,4 +57,86 @@
       <bpmn:incoming>Flow_TaskB_To_End</bpmn:incoming>
     </bpmn:endEvent>
   </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="checkout-mini">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="109" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="185" y="152" width="25" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_ServiceTask_A_di" bpmnElement="ServiceTask_A">
+        <dc:Bounds x="270" y="87" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_EventBased_di" bpmnElement="Gateway_EventBased">
+        <dc:Bounds x="425" y="102" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="419" y="72" width="63" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_CatchEvent_MsgX_di" bpmnElement="CatchEvent_MsgX">
+        <dc:Bounds x="532" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="512" y="125" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_CatchEvent_Timer_di" bpmnElement="CatchEvent_Timer">
+        <dc:Bounds x="532" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="518" y="215" width="65" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Merge_di" bpmnElement="Gateway_Merge" isMarkerVisible="true">
+        <dc:Bounds x="625" y="102" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="611" y="78" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_ServiceTask_B_di" bpmnElement="ServiceTask_B">
+        <dc:Bounds x="730" y="87" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="892" y="109" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="900" y="152" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_TaskA_di" bpmnElement="Flow_Start_To_TaskA">
+        <di:waypoint x="215" y="127" />
+        <di:waypoint x="270" y="127" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TaskA_To_Gateway_di" bpmnElement="Flow_TaskA_To_Gateway">
+        <di:waypoint x="370" y="127" />
+        <di:waypoint x="425" y="127" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_MsgX_di" bpmnElement="Flow_Gateway_To_MsgX">
+        <di:waypoint x="450" y="102" />
+        <di:waypoint x="450" y="100" />
+        <di:waypoint x="532" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Timer_di" bpmnElement="Flow_Gateway_To_Timer">
+        <di:waypoint x="450" y="152" />
+        <di:waypoint x="450" y="190" />
+        <di:waypoint x="532" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_MsgX_To_Merge_di" bpmnElement="Flow_MsgX_To_Merge">
+        <di:waypoint x="568" y="100" />
+        <di:waypoint x="650" y="100" />
+        <di:waypoint x="650" y="102" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Timer_To_Merge_di" bpmnElement="Flow_Timer_To_Merge">
+        <di:waypoint x="568" y="190" />
+        <di:waypoint x="650" y="190" />
+        <di:waypoint x="650" y="152" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Merge_To_TaskB_di" bpmnElement="Flow_Merge_To_TaskB">
+        <di:waypoint x="675" y="127" />
+        <di:waypoint x="730" y="127" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TaskB_To_End_di" bpmnElement="Flow_TaskB_To_End">
+        <di:waypoint x="830" y="127" />
+        <di:waypoint x="892" y="127" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>
