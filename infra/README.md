@@ -7,12 +7,15 @@
 ```
 infra/
 ├── compose/
-│   └── docker-compose.core.yml   # Сервисы профиля core (PostgreSQL, ...)
+│   └── docker-compose.core.yml   # Сервисы профиля core (PostgreSQL, Redis, MinIO, ...)
 ├── postgres/
 │   ├── init/
 │   │   └── 01-init-databases.sh  # Инициализация БД, ролей и прав доступа
 │   ├── verify-postgres.ps1       # Скрипт верификации для Windows (PowerShell)
 │   └── verify-postgres.sh        # Скрипт верификации для Linux/macOS (Bash)
+├── storage/
+│   ├── verify-storage.ps1        # Скрипт верификации Redis & MinIO (PowerShell)
+│   └── verify-storage.sh         # Скрипт верификации Redis & MinIO (Bash)
 └── pom.xml
 ```
 
@@ -44,14 +47,7 @@ infra/
    - Также в каждой БД предсоздана схема `bpm` для оркестратора Operaton со схожим разделением прав.
    - Пользователю `debezium` выданы права на чтение таблиц и создание публикации для CDC outbox.
 
-## 3. Запуск и проверка
-
-### Запуск контейнера
-```bash
-docker compose --profile core up -d postgres
-```
-
-### Проверка работоспособности и прав доступа
+### Проверка PostgreSQL
 
 Для Windows:
 ```powershell
@@ -63,8 +59,48 @@ powershell -ExecutionPolicy Bypass -File infra/postgres/verify-postgres.ps1
 bash infra/postgres/verify-postgres.sh
 ```
 
-Скрипты верификации проверяют:
-- Включение `wal_level=logical`, лимиты слотов и отправителей WAL.
-- Наличие всех 9 баз данных.
-- Работу системных пользователей `debezium`, `keycloak`, `litellm`.
-- Для всех 7 бизнес-сервисов: создание таблицы владельцем, чтение/запись пользователем приложения, **отклонение попытки создания таблицы пользователем приложения (DDL forbidden)**, чтение данных пользователем Debezium, очистка тестовой таблицы.
+---
+
+## 3. Redis и MinIO (T1.2)
+
+### Redis
+- **Образ**: `redis:7-alpine`
+- **Порт**: `6379`
+- **Именованный том**: `srh_redis_data`
+- **Назначение**: сессии Gateway (BFF), rate limiting, временные кэши, Pub/Sub для WebSocket.
+
+### MinIO (S3-совместимое объектное хранилище)
+- **Образ**: `minio/minio:latest`
+- **Порты**:
+  - `9000` (S3 API)
+  - `9001` (Web Console)
+- **Именованный том**: `srh_minio_data`
+- **Учётные данные по умолчанию**: `minioadmin` / `minioadmin`
+- **Автоматическая инициализация бакетов (`minio-init`)**:
+  При старте Compose контейнер `minio-init` (`minio/mc:latest`) автоматически и идемпотентно создаёт требуемые бакеты:
+  - `handover-photos` (фотографии приёма-передачи оборудования)
+  - `acts` (сгенерированные акты)
+  - `catalog-media` (фотографии и медиа карточек SKU каталога)
+
+### Запуск сервисов
+```bash
+docker compose --profile core up -d
+```
+
+### Проверка Redis и MinIO
+
+Для Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/storage/verify-storage.ps1
+```
+
+Для Linux / macOS / WSL:
+```bash
+bash infra/storage/verify-storage.sh
+```
+
+Скрипт проверяет:
+- Работоспособность Redis (PING/PONG, запись и чтение тестового ключа).
+- Live healthcheck MinIO (`/minio/health/live`).
+- Существование всех 3 обязательных бакетов (`handover-photos`, `acts`, `catalog-media`).
+- Загрузку, чтение и удаление тестового объекта через MinIO Client (`mc`).
