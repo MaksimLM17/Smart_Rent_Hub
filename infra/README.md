@@ -104,3 +104,60 @@ bash infra/storage/verify-storage.sh
 - Live healthcheck MinIO (`/minio/health/live`).
 - Существование всех 3 обязательных бакетов (`handover-photos`, `acts`, `catalog-media`).
 - Загрузку, чтение и удаление тестового объекта через MinIO Client (`mc`).
+
+---
+
+## 4. Keycloak (T1.3)
+
+### Параметры сервера
+- **Образ**: `quay.io/keycloak/keycloak:26.1`
+- **Порты**: `8081` (внешний HTTP для хоста), `8080` (внутренний в сети Docker)
+- **База данных**: PostgreSQL (`jdbc:postgresql://postgres:5432/keycloak`, пользователь `keycloak`)
+- **Режим запуска**: `start-dev --import-realm`
+
+### Realm `smartrent` как код
+Файл конфигурации: [`infra/keycloak/realm-smartrent.json`](file:///d:/Max/Projects/Smart_Rent_Hub/infra/keycloak/realm-smartrent.json)
+
+1. **Функциональные роли (PRD 3.2)**:
+   - `CUSTOMER` — клиент сервиса
+   - `CATALOG_EDITOR` — редактор каталога
+   - `WAREHOUSE_OPERATOR` — оператор склада
+   - `WAREHOUSE_SUPERVISOR` — старший смены склада
+   - `SERVICE_ENGINEER` — сервисный инженер
+   - `RISK_MODERATOR` — модератор рисков
+   - `SUPPORT_AGENT` — оператор поддержки
+   - `FINANCE_OPERATOR` — финансовый специалист
+   - `PRICING_MANAGER` — менеджер по тарифам
+   - `CONTENT_MANAGER` — контент-менеджер
+   - `AUDITOR` — аудитор
+   - `ADMIN` — администратор платформы
+
+2. **Клиенты OIDC (SDD 9.1)**:
+   - `srh-customer` (confidential, secret: `srh-customer-secret`, redirect URIs: `http://localhost:8080/login/oauth2/code/customer`, `http://localhost:3000/*`)
+   - `srh-staff` (confidential, secret: `srh-staff-secret`, redirect URIs: `http://localhost:8080/login/oauth2/code/staff`, `http://localhost:3001/*`)
+   - `srh-service-client` (client credentials, secret: `srh-service-secret`)
+
+3. **Тестовые пользователи**:
+   - `customer_test` (пароль `password123`, роль `CUSTOMER`)
+   - `editor_test` (пароль `password123`, роль `CATALOG_EDITOR`)
+   - `operator_test`, `supervisor_test`, `engineer_test`, `moderator_test`, `support_test`, `finance_test`, `pricing_test`, `admin_test`
+   - `staff_customer_test` (роли `CUSTOMER` + `WAREHOUSE_OPERATOR` для проверки SoD)
+
+### Проверка Keycloak
+
+Для Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/keycloak/verify-keycloak.ps1
+```
+
+Для Linux / macOS / WSL:
+```bash
+bash infra/keycloak/verify-keycloak.sh
+```
+
+Скрипт проверяет:
+- Доступность realm `smartrent`.
+- Успешное получение JWT-токена клиентом через `srh-customer` с ролью `CUSTOMER`.
+- Успешное получение JWT-токена персоналом через `srh-staff` с ролями `CATALOG_EDITOR` и `ADMIN`.
+- Успешное получение сервисного токена через `srh-service-client` (Client Credentials).
+
