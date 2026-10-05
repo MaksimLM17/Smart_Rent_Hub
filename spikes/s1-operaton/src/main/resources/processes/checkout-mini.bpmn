@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:operaton="http://operaton.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:message id="Message_msg_x" name="msg_x" />
+  <bpmn:process id="checkout-mini" name="Checkout Mini" isExecutable="true" operaton:historyTimeToLive="P30D">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_Start_To_TaskA</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_Start_To_TaskA" sourceRef="StartEvent_1" targetRef="ServiceTask_A" />
+    <bpmn:serviceTask id="ServiceTask_A" name="Service Task A"
+                      operaton:asyncBefore="true"
+                      operaton:delegateExpression="${taskADelegate}">
+      <bpmn:incoming>Flow_Start_To_TaskA</bpmn:incoming>
+      <bpmn:outgoing>Flow_TaskA_To_Gateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_TaskA_To_Gateway" sourceRef="ServiceTask_A" targetRef="Gateway_EventBased" />
+    <bpmn:eventBasedGateway id="Gateway_EventBased" name="Event Based Gateway">
+      <bpmn:incoming>Flow_TaskA_To_Gateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_To_MsgX</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_To_Timer</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:sequenceFlow id="Flow_Gateway_To_MsgX" sourceRef="Gateway_EventBased" targetRef="CatchEvent_MsgX" />
+    <bpmn:intermediateCatchEvent id="CatchEvent_MsgX" name="Message msg_x">
+      <bpmn:incoming>Flow_Gateway_To_MsgX</bpmn:incoming>
+      <bpmn:outgoing>Flow_MsgX_To_Merge</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1" messageRef="Message_msg_x" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Timer" sourceRef="Gateway_EventBased" targetRef="CatchEvent_Timer" />
+    <bpmn:intermediateCatchEvent id="CatchEvent_Timer" name="Timer PT30S">
+      <bpmn:incoming>Flow_Gateway_To_Timer</bpmn:incoming>
+      <bpmn:outgoing>Flow_Timer_To_Merge</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_MsgX_To_Merge" sourceRef="CatchEvent_MsgX" targetRef="Gateway_Merge" />
+    <bpmn:sequenceFlow id="Flow_Timer_To_Merge" sourceRef="CatchEvent_Timer" targetRef="Gateway_Merge" />
+    <bpmn:exclusiveGateway id="Gateway_Merge" name="Merge Gateway">
+      <bpmn:incoming>Flow_MsgX_To_Merge</bpmn:incoming>
+      <bpmn:incoming>Flow_Timer_To_Merge</bpmn:incoming>
+      <bpmn:outgoing>Flow_Merge_To_TaskB</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_Merge_To_TaskB" sourceRef="Gateway_Merge" targetRef="ServiceTask_B" />
+    <bpmn:serviceTask id="ServiceTask_B" name="Service Task B"
+                      operaton:delegateExpression="${taskBDelegate}">
+      <bpmn:incoming>Flow_Merge_To_TaskB</bpmn:incoming>
+      <bpmn:outgoing>Flow_TaskB_To_End</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_TaskB_To_End" sourceRef="ServiceTask_B" targetRef="EndEvent_1" />
+    <bpmn:endEvent id="EndEvent_1" name="End">
+      <bpmn:incoming>Flow_TaskB_To_End</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>

@@ -18,6 +18,7 @@
         <module>services</module>
         <module>infra</module>
         <module>load-tests</module>
+        <module>spikes/s1-operaton</module>
     </modules>
 
     <properties>

@@ -1,0 +1,19 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: bpm
+    show-sql: false
+
+operaton:
+  bpm:
+    database:
+      schema-update: true
+    job-execution:
+      enabled: false
+    history-level: full
+    generic-properties:
+      properties:
+        historyTimeToLive: P30D
