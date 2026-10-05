@@ -136,6 +136,74 @@ services:
     networks:
       - srh-network
 
+  kafka:
+    image: ${KAFKA_IMAGE:-apache/kafka:3.9.0}
+    container_name: srh-kafka
+    restart: unless-stopped
+    profiles:
+      - core
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_EXTERNAL_PORT:-9094}:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXT_HOST://:9094"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9094"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - srh-network
+
+  kafka-connect:
+    image: ${DEBEZIUM_CONNECT_IMAGE:-debezium/connect:2.7.3.Final}
+    container_name: srh-kafka-connect
+    restart: unless-stopped
+    profiles:
+      - core
+    ports:
+      - "${KAFKA_CONNECT_PORT:-8083}:8083"
+    environment:
+      BOOTSTRAP_SERVERS: "kafka:9092"
+      GROUP_ID: "srh-connect-group"
+      CONFIG_STORAGE_TOPIC: "_connect_configs"
+      OFFSET_STORAGE_TOPIC: "_connect_offsets"
+      STATUS_STORAGE_TOPIC: "_connect_statuses"
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      ENABLE_DEBEZIUM_SCRIPTING: "false"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - srh-network
+
 volumes:
   postgres_data:
     name: srh_postgres_data
@@ -143,6 +211,8 @@ volumes:
     name: srh_redis_data
   minio_data:
     name: srh_minio_data
+  kafka_data:
+    name: srh_kafka_data
 
 networks:
   srh-network:
