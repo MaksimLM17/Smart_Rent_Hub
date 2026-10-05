@@ -1,0 +1,5 @@
+name: smart-rent-hub
+
+include:
+  - path:
+      - infra/compose/docker-compose.core.yml
