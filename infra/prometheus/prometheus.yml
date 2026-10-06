@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'otel-collector-internal'
+    static_configs:
+      - targets: ['otel-collector:8888']
+
+  - job_name: 'otel-collector-metrics'
+    static_configs:
+      - targets: ['otel-collector:8889']
+
+  - job_name: 'external-stubs'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['external-stubs:8089']
+
+  - job_name: 'smart-rent-services'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'gateway:8080'
+          - 'inventory:8082'
+          - 'booking-pricing:8083'
+          - 'payments:8084'
+          - 'risk:8085'
+          - 'notification-live:8086'

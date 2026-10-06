@@ -1,0 +1,33 @@
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+loki.source.api "http_listener" {
+  http {
+    listen_address = "0.0.0.0"
+    listen_port    = 9999
+  }
+  forward_to = [loki.process.add_service_label.receiver]
+}
+
+loki.process "add_service_label" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.json {
+    expressions = {
+      level   = "level",
+      service = "service",
+      traceId = "traceId",
+      spanId  = "spanId",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level   = "level",
+      service = "service",
+    }
+  }
+}
