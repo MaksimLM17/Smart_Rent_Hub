@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'smart-rent-hub'
+    orgId: 1
+    folder: 'Smart Rent Hub'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

@@ -7,7 +7,25 @@
 ```
 infra/
 ├── compose/
-│   └── docker-compose.core.yml   # Сервисы профиля core (PostgreSQL, Redis, MinIO, ...)
+│   ├── docker-compose.core.yml   # Сервисы профиля core (PostgreSQL, Redis, MinIO, Keycloak, Kafka...)
+│   └── docker-compose.obs.yml    # Сервисы профиля obs (OTel Collector, Jaeger, Prometheus, Grafana, Loki, Alloy)
+├── otel/
+│   └── otel-collector-config.yml # Конфигурация OTel Collector
+├── prometheus/
+│   └── prometheus.yml            # Конфигурация Prometheus
+├── loki/
+│   └── loki-config.yml           # Конфигурация Grafana Loki
+├── alloy/
+│   └── config.alloy              # Конфигурация Grafana Alloy
+├── grafana/
+│   └── provisioning/             # Автоматическая инициализация Grafana
+│       ├── datasources/datasources.yml
+│       └── dashboards/
+│           ├── dashboards.yml
+│           └── json/smart-rent-hub-overview.json
+├── obs/
+│   ├── verify-obs.ps1            # Скрипт верификации стека наблюдаемости (PowerShell)
+│   └── verify-obs.sh             # Скрипт верификации стека наблюдаемости (Bash)
 ├── postgres/
 │   ├── init/
 │   │   └── 01-init-databases.sh  # Инициализация БД, ролей и прав доступа
@@ -255,6 +273,49 @@ powershell -ExecutionPolicy Bypass -File infra/stubs/verify-stubs.ps1
 Для Linux / macOS / WSL:
 ```bash
 bash infra/stubs/verify-stubs.sh
+```
+
+---
+
+## 7. Стек наблюдаемости (Observability, T1.6)
+
+Стек наблюдаемости (профиль Docker Compose `obs`, SDD 10) обеспечивает сквозную трассировку, сбор метрик и централизованное логирование для всей микросервисной платформы.
+
+### Компоненты стека
+
+| Сервис | Порт | Описание | UI / Эндпоинт |
+|---|---|---|---|
+| **Jaeger** | `16686` (UI), `4317` (OTLP) | Хранилище и визуализация распределённых трассировок (Distributed Tracing) | [http://localhost:16686](http://localhost:16686) |
+| **OTel Collector** | `4317` (gRPC), `4318` (HTTP), `8889` (Prometheus) | Сборщик телеметрии OpenTelemetry, батчинг, маршрутизация в Jaeger и Prometheus | [http://localhost:8889/metrics](http://localhost:8889/metrics) |
+| **Prometheus** | `9090` | Сбор и хранение временных рядов метрик сервисов и инфраструктуры | [http://localhost:9090](http://localhost:9090) |
+| **Grafana Loki** | `3100` | Хранилище структурированных логов приложений | [http://localhost:3100/ready](http://localhost:3100/ready) |
+| **Grafana Alloy** | `12345` (UI), `9999` (HTTP) | Агент сбора логов, парсинг JSON-логов (`traceId`, `spanId`, `service`, `level`) и отправка в Loki | [http://localhost:12345](http://localhost:12345) |
+| **Grafana** | `3000` | Единая панель мониторинга с автоматическим провижинингом источников данных и дашбордов | [http://localhost:3000](http://localhost:3000) (admin / admin) |
+
+### Связанность данных (Correlation)
+- **Trace-to-Logs**: из просмотра трейса в Jaeger / Grafana доступен прямой переход к логам этого запроса в Loki.
+- **Logs-to-Trace**: в логах извлекается поле `traceId`, позволяя в один клик открыть соответствующий распределённый трейс в Jaeger.
+- **Metrics-to-Trace**: в метриках настроена интеграция эксемпляров (exemplars) с Jaeger.
+
+### Запуск профиля
+```bash
+# Запуск только профиля наблюдаемости
+docker compose --profile obs up -d
+
+# Запуск полного стенда (core + obs)
+docker compose --profile core --profile obs up -d
+```
+
+### Проверка работы
+
+Для Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/obs/verify-obs.ps1
+```
+
+Для Linux / macOS / WSL:
+```bash
+bash infra/obs/verify-obs.sh
 ```
 
 
