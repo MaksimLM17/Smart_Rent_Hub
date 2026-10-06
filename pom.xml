@@ -16,6 +16,7 @@
         <module>contracts</module>
         <module>libs</module>
         <module>services</module>
+        <module>tools</module>
         <module>infra</module>
         <module>load-tests</module>
         <module>spikes/s1-operaton</module>
@@ -116,6 +117,15 @@
     </repositories>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

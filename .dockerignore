@@ -1,0 +1,14 @@
+.git
+.gitignore
+.github
+.editorconfig
+.gitattributes
+.agents
+**/.idea
+**/*.iml
+**/target
+**/.system_generated
+*.md
+docs/
+spikes/
+load-tests/

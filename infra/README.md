@@ -211,4 +211,50 @@ bash infra/debezium/verify-kafka-connect.sh
 - Автоматическую регистрацию коннектора `booking-outbox` (и остальных).
 - Статус зарегистрированных коннекторов.
 
+---
+
+## 6. Вспомогательное приложение `external-stubs` (T1.5)
+
+Приложение-заглушка на Spring Boot (`tools/external-stubs`) для эмуляции внешних систем (SMS Gateway, Bank ID / Identity Provider, Acquiring / Payment Gateway) с управляемыми тестовыми сценариями.
+
+- **Порт**: `8089` (переменная `${EXTERNAL_STUBS_PORT:-8089}`)
+- **Профиль Docker Compose**: `core`
+- **Healthcheck**: `GET /actuator/health`
+
+### REST API
+
+#### 1. SMS Gateway
+- `POST /api/stubs/sms/send` — отправка SMS (автоматически логирует в консоль и извлекает проверочный код).
+- `GET /api/stubs/sms/last?phoneNumber=...` — получение последнего отправленного SMS/кода для автотестов и Keycloak SMS SPI.
+- `GET /api/stubs/sms/history?phoneNumber=...` — история отправленных сообщений.
+- `DELETE /api/stubs/sms` — очистка истории сообщений.
+- `POST /api/stubs/sms/scenario` — настройка сценария (`SUCCESS`, `FAILURE`, `DELAY`).
+- `GET /api/stubs/sms/scenario` — просмотр активного сценария.
+
+#### 2. Bank ID / Identity Provider
+- `POST /api/stubs/bank-id/verify` — проверка личности / паспорта клиента.
+- `POST /api/stubs/bank-id/scenarios` — задание сценария проверки для конкретного `clientId` или глобально (`VERIFIED`, `REJECTED`, `PENDING`, `TIMEOUT`, `ERROR`, задержка `delayMs`).
+- `GET /api/stubs/bank-id/scenarios` — список настроенных сценариев.
+- `DELETE /api/stubs/bank-id/scenarios` — сброс сценариев в значения по умолчанию.
+- `GET /api/stubs/bank-id/history` — история выполненных проверок.
+
+#### 3. Payment Gateway / Acquiring
+- `POST /api/stubs/payments/authorize` — эмуляция авторизации платежа / холдирования средств.
+- `POST /api/stubs/payments/scenarios` — задание сценария для `bookingId` или по умолчанию (`SUCCESS`, `INSUFFICIENT_FUNDS`, `THREE_DS_REQUIRED`, `TIMEOUT`, `FAILED`).
+- `GET /api/stubs/payments/scenarios` — список сценариев платежей.
+- `DELETE /api/stubs/payments/scenarios` — сброс сценариев.
+- `GET /api/stubs/payments/history` — история платежей.
+
+### Проверка работы
+
+Для Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/stubs/verify-stubs.ps1
+```
+
+Для Linux / macOS / WSL:
+```bash
+bash infra/stubs/verify-stubs.sh
+```
+
 
