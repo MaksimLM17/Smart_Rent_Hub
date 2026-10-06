@@ -31,6 +31,10 @@ infra/
 │   │   └── 01-init-databases.sh  # Инициализация БД, ролей и прав доступа
 │   ├── verify-postgres.ps1       # Скрипт верификации для Windows (PowerShell)
 │   └── verify-postgres.sh        # Скрипт верификации для Linux/macOS (Bash)
+├── scripts/
+│   ├── up.ps1 / up.sh            # Запуск стенда с выбором профилей, ожиданием и регистрацией коннекторов
+│   ├── down.ps1 / down.sh        # Остановка контейнеров (опционально с очисткой томов -Volumes)
+│   └── reset.ps1 / reset.sh      # Полный сброс и перезапуск с нуля
 ├── storage/
 │   ├── verify-storage.ps1        # Скрипт верификации Redis & MinIO (PowerShell)
 │   └── verify-storage.sh         # Скрипт верификации Redis & MinIO (Bash)
@@ -316,6 +320,54 @@ powershell -ExecutionPolicy Bypass -File infra/obs/verify-obs.ps1
 Для Linux / macOS / WSL:
 ```bash
 bash infra/obs/verify-obs.sh
+```
+
+---
+
+## 8. Скрипты управления инфраструктурой (T1.7)
+
+В каталоге `infra/scripts/` (и в корне проекта в виде удобных обёрток) расположены сценарии автоматизации жизненного цикла стенда:
+
+### `up.ps1` / `up.sh`
+- Поднимает выбранные профили через Docker Compose (`core`, `obs` или оба).
+- Проверяет запуск демона Docker и выводит понятную инструкцию, если Docker Desktop выключен.
+- Копирует `.env.example` в `.env`, если файл конфигурации отсутствует.
+- Ожидает готовности сервисов (`healthcheck`).
+- Для профиля `core` автоматически вызывает скрипт регистрации Debezium Outbox коннекторов.
+- Выводит сводную консольную таблицу со всеми адресами и реквизитами.
+
+```powershell
+# Запуск профиля core
+.\infra\scripts\up.ps1
+
+# Запуск core + obs
+.\infra\scripts\up.ps1 -Obs
+
+# Принудительная пересборка локальных образов
+.\infra\scripts\up.ps1 -Build
+```
+
+### `down.ps1` / `down.sh`
+- Корректно останавливает все контейнеры профилей `core` и `obs`.
+- При передаче ключа `-Volumes` удаляет именованные тома Docker.
+
+```powershell
+# Обычная остановка
+.\infra\scripts\down.ps1
+
+# Остановка с очисткой данных
+.\infra\scripts\down.ps1 -Volumes
+```
+
+### `reset.ps1` / `reset.sh`
+- Выполняет полный сброс: останавливает сервисы, очищает все персистентные тома (`down -v`) и запускает чистый стенд заново.
+
+```powershell
+# Полный сброс с подтверждением
+.\infra\scripts\reset.ps1
+
+# Полный сброс с профилем obs без запроса подтверждения
+.\infra\scripts\reset.ps1 -Obs -Force
 ```
 
 
