@@ -72,14 +72,14 @@ flowchart LR
 
 ### E0. Репозиторий и инженерная база
 
-| ID | Задача | Размер | Критерий приёмки |
-|---|---|---|---|
-| T0.1 | Инициализировать монорепо по SDD 3.5: каталоги `contracts`, `libs`, `services`, `tools`, `web`, `infra`, `load-tests`, `docs`; `.gitignore`, `.editorconfig`, `.gitattributes`, README | S | Структура в `main`, README ведёт к `docs/` |
-| T0.2 | Maven multi-module: родительский POM и BOM версий (Java 21, Spring Boot 4.1.x, Operaton, Spring AI, Testcontainers), Maven Wrapper | M | `./mvnw verify` проходит на пустых модулях; версии заданы только в BOM |
-| T0.3 | Настроить GitHub: защита `main`, шаблоны Issue (task, spike) и PR с чек-листом, labels, milestone «Этап 0», Project board | S | Прямой push в `main` запрещён; шаблоны доступны |
-| T0.4 | CI `ci`: сборка и тесты (кэш Maven, фильтры по путям), запуск ArchUnit | M | PR без зелёного CI не вливается |
-| T0.5 | Безопасность цепочки поставок: Dependabot (Maven, npm, Docker), CodeQL, secret scanning | S | Конфигурации в `.github/`, первый прогон успешен |
-| T0.6 | Форматирование кода (см. вопрос Q1 в разделе 8) и проверка в CI | S | Нарушение форматирования ломает сборку |
+| ID | Задача | Размер | Критерий приёмки | Статус |
+|---|---|---|---|---|
+| T0.1 | Инициализировать монорепо по SDD 3.5: каталоги `contracts`, `libs`, `services`, `tools`, `web`, `infra`, `load-tests`, `docs`; `.gitignore`, `.editorconfig`, `.gitattributes`, README | S | Структура в `main`, README ведёт к `docs/` | [x] Выполнено |
+| T0.2 | Maven multi-module: родительский POM и BOM версий (Java 21, Spring Boot 4.1.x, Operaton, Spring AI, Testcontainers), Maven Wrapper | M | `./mvnw verify` проходит на пустых модулях; версии заданы только в BOM | [x] Выполнено |
+| T0.3 | Настроить GitHub: защита `main`, шаблоны Issue (task, spike) и PR с чек-листом, labels, milestone «Этап 0», Project board | S | Прямой push в `main` запрещён; шаблоны доступны | [x] Выполнено |
+| T0.4 | CI `ci`: сборка и тесты (кэш Maven, фильтры по путям), запуск ArchUnit | M | PR без зелёного CI не вливается | [x] Выполнено |
+| T0.5 | Безопасность цепочки поставок: Dependabot (Maven, npm, Docker), CodeQL, secret scanning | S | Конфигурации в `.github/`, первый прогон успешен | [x] Выполнено |
+| T0.6 | Форматирование кода (см. вопрос Q1 в разделе 8) и проверка в CI | S | Нарушение форматирования ломает сборку | [x] Выполнено |
 
 ### E1. Локальная инфраструктура (Docker Compose)
 
@@ -95,13 +95,13 @@ flowchart LR
 
 ### E2. Общие библиотеки (`libs`)
 
-| ID | Задача | Размер | Критерий приёмки |
-|---|---|---|---|
-| T2.1 | `observability-starter`: Micrometer Tracing с мостом OpenTelemetry, JSON-логи с `traceId`, MDC, базовые метрики | M | Любой сервис с зависимостью отдаёт трассы, метрики и логи без настройки |
-| T2.2 | `security-starter`: проверка JWT (resource server), каталог «роль → разрешения» из PRD 3.2, `@PreAuthorize`, фильтры SoD-режимов (заглушка), тестовый хелпер токенов | L | Эндпоинт с `hasAuthority('sku:create')` доступен только нужной роли; тесты на все роли из каталога |
-| T2.3 | `outbox-starter`: таблицы `outbox` и `processed_event`, публикатор (вставка и удаление в одной транзакции), Inbox для потребителей | M | Интеграционный тест: запись в outbox попадает в WAL; повторное событие отсекается |
-| T2.4 | `test-support`: базовые классы Testcontainers (PostgreSQL, Kafka, Redis, MinIO, Keycloak) | M | Один и тот же набор поднимается в тестах двух сервисов |
-| T2.5 | `business-calendar` (каркас) | S | Отложена до этапа 2, достаточно интерфейса |
+| ID | Задача | Размер | Критерий приёмки | Статус |
+|---|---|---|---|---|
+| T2.1 | `observability-starter`: Micrometer Tracing с мостом OpenTelemetry, JSON-логи с `traceId`, MDC, базовые метрики | M | Любой сервис с зависимостью отдаёт трассы, метрики и логи без настройки | [x] Выполнено |
+| T2.2 | `security-starter`: проверка JWT (resource server), каталог «роль → разрешения» из PRD 3.2, `@PreAuthorize`, фильтры SoD-режимов (заглушка), тестовый хелпер токенов | L | Эндпоинт с `hasAuthority('sku:create')` доступен только нужной роли; тесты на все роли из каталога | [ ] В планах |
+| T2.3 | `outbox-starter`: таблицы `outbox` и `processed_event`, публикатор (вставка и удаление в одной транзакции), Inbox для потребителей | M | Интеграционный тест: запись в outbox попадает в WAL; повторное событие отсекается | [ ] В планах |
+| T2.4 | `test-support`: базовые классы Testcontainers (PostgreSQL, Kafka, Redis, MinIO, Keycloak) | M | Один и тот же набор поднимается в тестах двух сервисов | [ ] В планах |
+| T2.5 | `business-calendar` (каркас) | S | Отложена до этапа 2, достаточно интерфейса | [ ] В планах |
 
 ### E3. Gateway как BFF
 

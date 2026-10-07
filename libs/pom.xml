@@ -15,4 +15,8 @@
 
     <name>smart-rent-hub-libs</name>
     <description>Libraries module</description>
+
+    <modules>
+        <module>observability-starter</module>
+    </modules>
 </project>
