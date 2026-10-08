@@ -1,0 +1,168 @@
+# Smart Rent Hub - RBAC Catalog (Role to Permission Mapping)
+# Source: PRD v3.2 Section 3.2, 3.3; SDD v1.1 Section 9.2, ADR-012
+# Format: role -> list of permissions (resource:action)
+
+version: "1.0"
+
+roles:
+  CUSTOMER:
+    description: "Клиент сервиса аренды"
+    permissions:
+      - "catalog:read"
+      - "cart:manage"
+      - "order:create"
+      - "order:read"
+      - "order:cancel"
+      - "order:extend"
+      - "file:read"
+      - "claim:respond"
+
+  CATALOG_EDITOR:
+    description: "Редактор каталога товаров и оборудования"
+    permissions:
+      - "sku:*"
+      - "sku:create"
+      - "sku:read"
+      - "sku:update"
+      - "sku:delete"
+      - "unit:create"
+      - "unit:update"
+      - "kit:*"
+      - "kit:create"
+      - "kit:read"
+      - "kit:update"
+      - "kit:delete"
+      - "consumable:*"
+      - "consumable:create"
+      - "consumable:read"
+      - "consumable:update"
+      - "consumable:delete"
+      - "photo:upload"
+
+  WAREHOUSE_OPERATOR:
+    description: "Оператор склада (выдача, прием, первичная инспекция)"
+    permissions:
+      - "pickup-task:read"
+      - "pickup-task:perform"
+      - "handover:perform"
+      - "return:accept"
+      - "inspection:perform"
+      - "defect:record"
+      - "unit:scan"
+
+  WAREHOUSE_SUPERVISOR:
+    description: "Старший смены склада (ручное назначение, эскалации)"
+    permissions:
+      - "unit-assignment:override"
+      - "unit-status:adjust"
+      - "escalation:handle"
+      - "checklist:manage"
+
+  SERVICE_ENGINEER:
+    description: "Сервисный инженер (ТО, ремонт, оценка повреждений)"
+    permissions:
+      - "maintenance:verdict"
+      - "repair:manage"
+      - "damage:assess"
+      - "wear:reset"
+      - "unit:decommission:propose"
+
+  RISK_MODERATOR:
+    description: "Модератор рисков (ручная проверка заказов, чёрный список)"
+    permissions:
+      - "review:read"
+      - "review:decide"
+      - "customer-risk:read"
+      - "blacklist:propose"
+
+  SUPPORT_AGENT:
+    description: "Оператор службы поддержки"
+    permissions:
+      - "order:read"
+      - "customer:read"
+      - "claim:manage"
+      - "claim:resolve"
+      - "refund:issue"
+      - "notification:send-manual"
+
+  FINANCE_OPERATOR:
+    description: "Финансовый специалист"
+    permissions:
+      - "payment:read"
+      - "charge:manual"
+      - "debt:manage"
+      - "writeoff:approve"
+      - "fund-ledger:read"
+      - "finance-report:read"
+
+  PRICING_MANAGER:
+    description: "Менеджер по тарифам и ценообразованию"
+    permissions:
+      - "tariff:manage"
+      - "pricing-config:manage"
+      - "pricing-report:read"
+
+  CONTENT_MANAGER:
+    description: "Контент-менеджер (правила совместимости)"
+    permissions:
+      - "compat-rule:manage"
+      - "search-dictionary:manage"
+
+  AUDITOR:
+    description: "Аудитор (доступ только для чтения отчётов)"
+    permissions:
+      - "audit:read"
+      - "report:read"
+
+  ADMIN:
+    description: "Администратор платформы"
+    permissions:
+      - "user:manage"
+      - "role:grant"
+      - "config:manage"
+      - "user:block"
+      - "user:unblock"
+      - "blacklist:approve"
+      - "audit:read"
+
+compositeRoles:
+  Warehouse-Universal:
+    description: "Кладовщик-универсал (типичная малая команда)"
+    includedRoles:
+      - "WAREHOUSE_OPERATOR"
+      - "WAREHOUSE_SUPERVISOR"
+      - "RISK_MODERATOR"
+      - "CATALOG_EDITOR"
+
+  Warehouse-Manager:
+    description: "Менеджер склада"
+    includedRoles:
+      - "WAREHOUSE_OPERATOR"
+      - "WAREHOUSE_SUPERVISOR"
+      - "CATALOG_EDITOR"
+      - "SUPPORT_AGENT"
+
+  Service-Engineer:
+    description: "Сервисный инженер"
+    includedRoles:
+      - "SERVICE_ENGINEER"
+
+  Support-Risk:
+    description: "Оператор поддержки и рисков"
+    includedRoles:
+      - "SUPPORT_AGENT"
+      - "RISK_MODERATOR"
+
+  Finance-Auditor:
+    description: "Финансовый специалист и аудитор"
+    includedRoles:
+      - "FINANCE_OPERATOR"
+      - "AUDITOR"
+
+  Owner-Management:
+    description: "Владелец / руководитель"
+    includedRoles:
+      - "ADMIN"
+      - "PRICING_MANAGER"
+      - "FINANCE_OPERATOR"
+      - "AUDITOR"

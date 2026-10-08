@@ -113,6 +113,11 @@
                 <artifactId>smart-rent-hub-observability-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>team.ylab</groupId>
+                <artifactId>smart-rent-hub-security-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- Micrometer Tracing BOM -->
             <dependency>
