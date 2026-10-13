@@ -1,0 +1,37 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+srh:
+  gateway:
+    routes:
+      inventory-uri: ${INVENTORY_SERVICE_URI:http://localhost:8082}
+      customer-web-uri: ${CUSTOMER_WEB_URI:forward:/__stub/customer-web}
+      staff-web-uri: ${STAFF_WEB_URI:forward:/__stub/staff-web}
+
+smartrent:
+  observability:
+    service-name: gateway
+    tracing:
+      otlp:
+        endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    team.ylab.gateway: INFO

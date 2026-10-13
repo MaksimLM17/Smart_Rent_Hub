@@ -7,7 +7,13 @@ COPY .mvn .mvn
 COPY mvnw mvnw
 COPY contracts/pom.xml contracts/
 COPY libs/pom.xml libs/
+COPY libs/observability-starter/pom.xml libs/observability-starter/
+COPY libs/security-starter/pom.xml libs/security-starter/
+COPY libs/outbox-starter/pom.xml libs/outbox-starter/
+COPY libs/business-calendar/pom.xml libs/business-calendar/
+COPY libs/test-support/pom.xml libs/test-support/
 COPY services/pom.xml services/
+COPY services/gateway/pom.xml services/gateway/
 COPY tools/pom.xml tools/
 COPY tools/external-stubs/pom.xml tools/external-stubs/
 COPY infra/pom.xml infra/

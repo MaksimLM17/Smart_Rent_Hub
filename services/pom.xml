@@ -15,4 +15,8 @@
 
     <name>smart-rent-hub-services</name>
     <description>Services module</description>
+
+    <modules>
+        <module>gateway</module>
+    </modules>
 </project>
