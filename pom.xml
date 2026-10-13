@@ -125,6 +125,11 @@
             </dependency>
             <dependency>
                 <groupId>team.ylab</groupId>
+                <artifactId>smart-rent-hub-business-calendar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>team.ylab</groupId>
                 <artifactId>smart-rent-hub-test-support</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
