@@ -20,6 +20,9 @@ public class KafkaTestContainer extends KafkaContainer {
 
   public KafkaTestContainer(DockerImageName dockerImageName) {
     super(dockerImageName);
+    withEnv(
+        "KAFKA_LISTENERS",
+        "PLAINTEXT://0.0.0.0:9092,BROKER://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094");
   }
 
   /** Returns standard Spring Kafka configuration properties. */

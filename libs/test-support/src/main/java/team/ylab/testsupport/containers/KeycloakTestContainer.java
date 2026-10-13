@@ -1,11 +1,12 @@
 package team.ylab.testsupport.containers;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.MountableFile;
 
 /** Keycloak Testcontainer pre-configured with realm-smartrent.json and dev-mode import. */
 public class KeycloakTestContainer extends GenericContainer<KeycloakTestContainer> {
@@ -29,14 +30,19 @@ public class KeycloakTestContainer extends GenericContainer<KeycloakTestContaine
     withExposedPorts(KEYCLOAK_PORT);
     withEnv("KEYCLOAK_ADMIN", DEFAULT_ADMIN_USER);
     withEnv("KEYCLOAK_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD);
+    withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", DEFAULT_ADMIN_USER);
+    withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD);
     withEnv("KC_HEALTH_ENABLED", "true");
     withEnv("KC_HTTP_PORT", String.valueOf(KEYCLOAK_PORT));
     withCommand("start-dev", "--import-realm");
-    withClasspathResourceMapping(
-        "/keycloak/realm-smartrent.json",
-        "/opt/keycloak/data/import/realm-smartrent.json",
-        BindMode.READ_ONLY);
-    waitingFor(Wait.forHttp("/realms/" + DEFAULT_REALM).forPort(KEYCLOAK_PORT).forStatusCode(200));
+    withCopyFileToContainer(
+        MountableFile.forClasspathResource("/keycloak/realm-smartrent.json", 0644),
+        "/opt/keycloak/data/import/realm-smartrent.json");
+    waitingFor(
+        Wait.forHttp("/realms/" + DEFAULT_REALM)
+            .forPort(KEYCLOAK_PORT)
+            .forStatusCode(200)
+            .withStartupTimeout(Duration.ofMinutes(2)));
   }
 
   public String getAuthServerUrl() {
