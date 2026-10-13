@@ -1,0 +1,2 @@
+org.springframework.test.context.ContextCustomizerFactory=\
+team.ylab.testsupport.context.TestcontainersContextCustomizerFactory

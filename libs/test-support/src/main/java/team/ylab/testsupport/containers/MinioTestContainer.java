@@ -8,7 +8,7 @@ import org.testcontainers.utility.DockerImageName;
 /** MinIO Testcontainer for S3-compatible object storage (photos, media, documents). */
 public class MinioTestContainer extends MinIOContainer {
 
-  public static final String DEFAULT_IMAGE = "minio/minio:latest";
+  public static final String DEFAULT_IMAGE = "elestio/minio:RELEASE.2025-10-15T17-29-55Z";
   public static final String DEFAULT_USER = "minioadmin";
   public static final String DEFAULT_PASSWORD = "minioadmin";
   public static final String DEFAULT_REGION = "us-east-1";
@@ -22,7 +22,7 @@ public class MinioTestContainer extends MinIOContainer {
   }
 
   public MinioTestContainer(DockerImageName dockerImageName) {
-    super(dockerImageName);
+    super(dockerImageName.asCompatibleSubstituteFor("minio/minio"));
     withUserName(DEFAULT_USER);
     withPassword(DEFAULT_PASSWORD);
   }

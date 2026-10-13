@@ -3,11 +3,16 @@ package team.ylab.testsupport;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.test.context.ContextCustomizer;
+import team.ylab.testsupport.context.TestcontainersContextCustomizer;
+import team.ylab.testsupport.context.TestcontainersContextCustomizer.ContainerType;
+import team.ylab.testsupport.context.TestcontainersContextCustomizerFactory;
 
 @DisplayName("Containers Property Mapping Unit Tests")
 class ContainersPropertyMappingUnitTest {
@@ -49,5 +54,23 @@ class ContainersPropertyMappingUnitTest {
     assertThat(env.getProperty("srh.keycloak.realm")).isEqualTo("smartrent");
     assertThat(env.getProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri"))
         .isEqualTo("http://localhost:8080/realms/smartrent");
+  }
+
+  @Test
+  @DisplayName("ContextCustomizerFactory detects multiple @Enable*Testcontainer annotations")
+  void testContextCustomizerFactoryDetectsMultipleAnnotations() {
+    TestcontainersContextCustomizerFactory factory = new TestcontainersContextCustomizerFactory();
+
+    ContextCustomizer selectiveCustomizer =
+        factory.createContextCustomizer(SelectiveContainersIntegrationTest.class, List.of());
+    assertThat(selectiveCustomizer).isInstanceOf(TestcontainersContextCustomizer.class);
+    assertThat(((TestcontainersContextCustomizer) selectiveCustomizer).getEnabledContainers())
+        .containsExactlyInAnyOrder(ContainerType.POSTGRES, ContainerType.REDIS);
+
+    ContextCustomizer allCustomizer =
+        factory.createContextCustomizer(FirstServiceIntegrationTest.class, List.of());
+    assertThat(allCustomizer).isInstanceOf(TestcontainersContextCustomizer.class);
+    assertThat(((TestcontainersContextCustomizer) allCustomizer).getEnabledContainers())
+        .containsExactlyInAnyOrder(ContainerType.values());
   }
 }

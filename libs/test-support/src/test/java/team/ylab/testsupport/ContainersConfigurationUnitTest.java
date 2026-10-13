@@ -24,7 +24,8 @@ class ContainersConfigurationUnitTest {
       assertThat(PostgresTestContainer.DEFAULT_IMAGE).isEqualTo("postgres:17-alpine");
       assertThat(KafkaTestContainer.DEFAULT_IMAGE).isEqualTo("apache/kafka:3.9.0");
       assertThat(RedisTestContainer.DEFAULT_IMAGE).isEqualTo("redis:7-alpine");
-      assertThat(MinioTestContainer.DEFAULT_IMAGE).isEqualTo("minio/minio:latest");
+      assertThat(MinioTestContainer.DEFAULT_IMAGE)
+          .isEqualTo("elestio/minio:RELEASE.2025-10-15T17-29-55Z");
       assertThat(KeycloakTestContainer.DEFAULT_IMAGE).isEqualTo("quay.io/keycloak/keycloak:26.1");
     }
 
@@ -82,7 +83,7 @@ class ContainersConfigurationUnitTest {
     @DisplayName("MinIO test container has correct runtime configuration")
     void testMinioConfiguration() {
       MinioTestContainer container = new MinioTestContainer();
-      assertThat(container.getDockerImageName()).contains("minio/minio:latest");
+      assertThat(container.getDockerImageName()).contains(MinioTestContainer.DEFAULT_IMAGE);
       assertThat(container.getUserName()).isEqualTo("minioadmin");
       assertThat(container.getPassword()).isEqualTo("minioadmin");
     }

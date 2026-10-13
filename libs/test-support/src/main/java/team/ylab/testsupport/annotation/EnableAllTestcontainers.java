@@ -6,9 +6,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.springframework.test.context.ContextConfiguration;
 import team.ylab.testsupport.condition.RequiresDocker;
-import team.ylab.testsupport.context.AllContainersInitializer;
 
 /**
  * Enables all 5 core Testcontainers (PostgreSQL, Kafka, Redis, MinIO, Keycloak) for the annotated
@@ -19,5 +17,4 @@ import team.ylab.testsupport.context.AllContainersInitializer;
 @Documented
 @Inherited
 @RequiresDocker
-@ContextConfiguration(initializers = AllContainersInitializer.class)
 public @interface EnableAllTestcontainers {}
