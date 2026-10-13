@@ -20,5 +20,6 @@
         <module>observability-starter</module>
         <module>security-starter</module>
         <module>outbox-starter</module>
+        <module>test-support</module>
     </modules>
 </project>

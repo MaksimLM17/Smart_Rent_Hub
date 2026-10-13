@@ -1,0 +1,17 @@
+package team.ylab.testsupport.annotation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import team.ylab.testsupport.condition.RequiresDocker;
+
+/** Enables Keycloak IAM Testcontainer for the annotated test class. */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@RequiresDocker
+public @interface EnableKeycloakTestcontainer {}

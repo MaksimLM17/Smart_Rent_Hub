@@ -1,0 +1,404 @@
+{
+  "id": "smartrent",
+  "realm": "smartrent",
+  "displayName": "Smart Rent Hub",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "CUSTOMER",
+        "description": "Клиент сервиса аренды"
+      },
+      {
+        "name": "CATALOG_EDITOR",
+        "description": "Редактор каталога товаров и оборудования"
+      },
+      {
+        "name": "WAREHOUSE_OPERATOR",
+        "description": "Оператор склада (выдача, прием, первичная инспекция)"
+      },
+      {
+        "name": "WAREHOUSE_SUPERVISOR",
+        "description": "Старший смены склада (ручное назначение, эскалации)"
+      },
+      {
+        "name": "SERVICE_ENGINEER",
+        "description": "Сервисный инженер (ТО, ремонт, оценка повреждений)"
+      },
+      {
+        "name": "RISK_MODERATOR",
+        "description": "Модератор рисков (ручная проверка заказов, чёрный список)"
+      },
+      {
+        "name": "SUPPORT_AGENT",
+        "description": "Оператор службы поддержки"
+      },
+      {
+        "name": "FINANCE_OPERATOR",
+        "description": "Финансовый специалист"
+      },
+      {
+        "name": "PRICING_MANAGER",
+        "description": "Менеджер по тарифам и ценообразованию"
+      },
+      {
+        "name": "CONTENT_MANAGER",
+        "description": "Контент-менеджер (правила совместимости)"
+      },
+      {
+        "name": "AUDITOR",
+        "description": "Аудитор (доступ только для чтения отчётов)"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Администратор платформы"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "Warehouse-Universal",
+      "path": "/Warehouse-Universal",
+      "realmRoles": [
+        "WAREHOUSE_OPERATOR",
+        "WAREHOUSE_SUPERVISOR",
+        "RISK_MODERATOR",
+        "CATALOG_EDITOR"
+      ]
+    },
+    {
+      "name": "Warehouse-Manager",
+      "path": "/Warehouse-Manager",
+      "realmRoles": [
+        "WAREHOUSE_OPERATOR",
+        "WAREHOUSE_SUPERVISOR",
+        "CATALOG_EDITOR",
+        "SUPPORT_AGENT"
+      ]
+    },
+    {
+      "name": "Service-Engineer",
+      "path": "/Service-Engineer",
+      "realmRoles": [
+        "SERVICE_ENGINEER"
+      ]
+    },
+    {
+      "name": "Support-Risk",
+      "path": "/Support-Risk",
+      "realmRoles": [
+        "SUPPORT_AGENT",
+        "RISK_MODERATOR"
+      ]
+    },
+    {
+      "name": "Finance-Auditor",
+      "path": "/Finance-Auditor",
+      "realmRoles": [
+        "FINANCE_OPERATOR",
+        "AUDITOR"
+      ]
+    },
+    {
+      "name": "Owner-Management",
+      "path": "/Owner-Management",
+      "realmRoles": [
+        "ADMIN",
+        "PRICING_MANAGER",
+        "FINANCE_OPERATOR",
+        "AUDITOR"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "srh-customer",
+      "name": "SRH Customer Web Application",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "srh-customer-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/customer",
+        "http://localhost:3000/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "+"
+      ]
+    },
+    {
+      "clientId": "srh-staff",
+      "name": "SRH Staff Web Application",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "srh-staff-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/staff",
+        "http://localhost:3001/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "+"
+      ]
+    },
+    {
+      "clientId": "srh-service-client",
+      "name": "SRH Backend Service Account",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "srh-service-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "customer_test",
+      "enabled": true,
+      "email": "customer@smartrent.local",
+      "firstName": "Иван",
+      "lastName": "Клиентов",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ],
+      "attributes": {
+        "phoneNumber": [
+          "+79991112233"
+        ]
+      }
+    },
+    {
+      "username": "editor_test",
+      "enabled": true,
+      "email": "editor@smartrent.local",
+      "firstName": "Елена",
+      "lastName": "Редакторова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CATALOG_EDITOR"
+      ]
+    },
+    {
+      "username": "operator_test",
+      "enabled": true,
+      "email": "operator@smartrent.local",
+      "firstName": "Олег",
+      "lastName": "Операторов",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "WAREHOUSE_OPERATOR"
+      ]
+    },
+    {
+      "username": "supervisor_test",
+      "enabled": true,
+      "email": "supervisor@smartrent.local",
+      "firstName": "Сергей",
+      "lastName": "Супервизоров",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "WAREHOUSE_SUPERVISOR"
+      ]
+    },
+    {
+      "username": "engineer_test",
+      "enabled": true,
+      "email": "engineer@smartrent.local",
+      "firstName": "Игорь",
+      "lastName": "Инженеров",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "SERVICE_ENGINEER"
+      ]
+    },
+    {
+      "username": "moderator_test",
+      "enabled": true,
+      "email": "moderator@smartrent.local",
+      "firstName": "Михаил",
+      "lastName": "Модераторов",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "RISK_MODERATOR"
+      ]
+    },
+    {
+      "username": "support_test",
+      "enabled": true,
+      "email": "support@smartrent.local",
+      "firstName": "Светлана",
+      "lastName": "Поддержкова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "SUPPORT_AGENT"
+      ]
+    },
+    {
+      "username": "finance_test",
+      "enabled": true,
+      "email": "finance@smartrent.local",
+      "firstName": "Фёдор",
+      "lastName": "Финансов",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "FINANCE_OPERATOR"
+      ]
+    },
+    {
+      "username": "pricing_test",
+      "enabled": true,
+      "email": "pricing@smartrent.local",
+      "firstName": "Полина",
+      "lastName": "Прайсингова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PRICING_MANAGER"
+      ]
+    },
+    {
+      "username": "content_test",
+      "enabled": true,
+      "email": "content@smartrent.local",
+      "firstName": "Константин",
+      "lastName": "Контентов",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CONTENT_MANAGER"
+      ]
+    },
+    {
+      "username": "auditor_test",
+      "enabled": true,
+      "email": "auditor@smartrent.local",
+      "firstName": "Анна",
+      "lastName": "Аудиторова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "AUDITOR"
+      ]
+    },
+    {
+      "username": "admin_test",
+      "enabled": true,
+      "email": "admin@smartrent.local",
+      "firstName": "Алексей",
+      "lastName": "Админов",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN"
+      ]
+    },
+    {
+      "username": "staff_customer_test",
+      "enabled": true,
+      "email": "dual@smartrent.local",
+      "firstName": "Дмитрий",
+      "lastName": "Двойной",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER",
+        "WAREHOUSE_OPERATOR"
+      ]
+    }
+  ]
+}
