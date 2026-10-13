@@ -24,8 +24,7 @@ class ContainersConfigurationUnitTest {
       assertThat(PostgresTestContainer.DEFAULT_IMAGE).isEqualTo("postgres:17-alpine");
       assertThat(KafkaTestContainer.DEFAULT_IMAGE).isEqualTo("apache/kafka:3.9.0");
       assertThat(RedisTestContainer.DEFAULT_IMAGE).isEqualTo("redis:7-alpine");
-      assertThat(MinioTestContainer.DEFAULT_IMAGE)
-          .isEqualTo("elestio/minio:RELEASE.2025-10-15T17-29-55Z");
+      assertThat(MinioTestContainer.DEFAULT_IMAGE).isEqualTo("elestio/minio:latest");
       assertThat(KeycloakTestContainer.DEFAULT_IMAGE).isEqualTo("quay.io/keycloak/keycloak:26.1");
     }
 
