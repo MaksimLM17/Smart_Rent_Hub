@@ -1,0 +1,117 @@
+package team.ylab.gateway.security;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.server.WebSessionServerOAuth2AuthorizedClientRepository;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.logout.WebSessionServerLogoutHandler;
+import team.ylab.gateway.config.SrhGatewayProperties;
+
+/**
+ * Reactive security configuration for Gateway acting as the Backend-For-Frontend (BFF).
+ *
+ * <p>Configures OAuth2 login (Keycloak), server-side session management (Redis), logout handling,
+ * and authorized client management for downstream {@code TokenRelay} (SDD v1.1 Section 4.1, 9.1).
+ */
+@Configuration(proxyBeanMethods = false)
+@EnableWebFluxSecurity
+public class GatewaySecurityConfig {
+
+  @Bean
+  public SecurityWebFilterChain springSecurityFilterChain(
+      ServerHttpSecurity http,
+      SrhGatewayProperties gatewayProperties,
+      ReactiveClientRegistrationRepository clientRegistrationRepository,
+      ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+
+    http
+        // CSRF hardening is implemented in task T3.3
+        .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        .authorizeExchange(
+            exchanges ->
+                exchanges
+                    // Observability & Actuator
+                    .pathMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus")
+                    .permitAll()
+                    // Next.js stubs and frontend static resources
+                    .pathMatchers("/__stub/**", "/_next/**", "/favicon.ico")
+                    .permitAll()
+                    // Public customer browsing paths
+                    .pathMatchers("/", "/catalog", "/catalog/**")
+                    .permitAll()
+                    // Session status inquiry endpoint
+                    .pathMatchers("/api/v1/session")
+                    .permitAll()
+                    // Public catalog and search API
+                    .pathMatchers("/api/v1/catalog/**", "/api/v1/search/**")
+                    .permitAll()
+                    // OAuth2 authorization and callback paths
+                    .pathMatchers("/oauth2/**", "/login/**")
+                    .permitAll()
+                    // Staff web UI and Staff API paths require authentication
+                    .pathMatchers("/staff", "/staff/**", "/api/v1/staff/**")
+                    .authenticated()
+                    // Customer authenticated paths
+                    .pathMatchers(
+                        "/orders/**",
+                        "/checkout/**",
+                        "/profile/**",
+                        "/api/v1/orders/**",
+                        "/api/v1/quotes/**")
+                    .authenticated()
+                    // Other requests default to permitAll for Next.js routing
+                    .anyExchange()
+                    .permitAll())
+        .oauth2Login(
+            oauth2 ->
+                oauth2
+                    .clientRegistrationRepository(clientRegistrationRepository)
+                    .authorizedClientRepository(authorizedClientRepository)
+                    .authenticationSuccessHandler(
+                        new CustomServerAuthenticationSuccessHandler(gatewayProperties)))
+        .logout(
+            logout ->
+                logout
+                    .logoutUrl("/logout")
+                    .logoutHandler(new WebSessionServerLogoutHandler())
+                    .logoutSuccessHandler(new CustomServerLogoutSuccessHandler(gatewayProperties)))
+        .exceptionHandling(
+            exceptions ->
+                exceptions.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
+
+    return http.build();
+  }
+
+  @Bean
+  public ServerOAuth2AuthorizedClientRepository authorizedClientRepository() {
+    return new WebSessionServerOAuth2AuthorizedClientRepository();
+  }
+
+  @Bean
+  public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
+      ReactiveClientRegistrationRepository clientRegistrationRepository,
+      ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+
+    ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider =
+        ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
+            .authorizationCode()
+            .refreshToken()
+            .clientCredentials()
+            .build();
+
+    DefaultReactiveOAuth2AuthorizedClientManager authorizedClientManager =
+        new DefaultReactiveOAuth2AuthorizedClientManager(
+            clientRegistrationRepository, authorizedClientRepository);
+    authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+
+    return authorizedClientManager;
+  }
+}

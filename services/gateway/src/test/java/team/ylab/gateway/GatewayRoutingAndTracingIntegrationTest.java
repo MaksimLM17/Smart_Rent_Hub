@@ -78,7 +78,10 @@ class GatewayRoutingAndTracingIntegrationTest {
 
     int inventoryPort = inventoryMockServer.getAddress().getPort();
     registry.add("srh.gateway.routes.inventory-uri", () -> "http://127.0.0.1:" + inventoryPort);
+    registry.add("srh.gateway.session.redis-enabled", () -> "false");
   }
+
+  @Autowired private org.springframework.web.server.session.WebSessionManager sessionManager;
 
   @AfterAll
   static void stopInventoryServer() {
@@ -127,12 +130,17 @@ class GatewayRoutingAndTracingIntegrationTest {
     assertThat(lastInventoryIdempotencyKey.get()).isEqualTo("idem-key-123");
 
     // Verify span exported to OpenTelemetry SpanExporter (Jaeger)
-    assertThat(spanExporter.getExportedSpans())
-        .anySatisfy(
-            span -> {
-              assertThat(span.getTraceId()).isEqualTo(responseTraceId);
-              assertThat(span.getName()).isEqualTo("HTTP GET /api/v1/catalog/skus/sku-42");
-            });
+    org.awaitility.Awaitility.await()
+        .atMost(java.time.Duration.ofSeconds(3))
+        .untilAsserted(
+            () ->
+                assertThat(spanExporter.getExportedSpans())
+                    .anySatisfy(
+                        span -> {
+                          assertThat(span.getTraceId()).isEqualTo(responseTraceId);
+                          assertThat(span.getName())
+                              .isEqualTo("HTTP GET /api/v1/catalog/skus/sku-42");
+                        }));
   }
 
   @Test
@@ -143,7 +151,7 @@ class GatewayRoutingAndTracingIntegrationTest {
 
     webTestClient
         .get()
-        .uri("/api/v1/staff/skus")
+        .uri("/api/v1/catalog/skus")
         .header(TraceConstants.TRACEPARENT_HEADER, incomingTraceparent)
         .exchange()
         .expectStatus()
@@ -158,12 +166,16 @@ class GatewayRoutingAndTracingIntegrationTest {
         .startsWith("00-" + incomingTraceId + "-")
         .doesNotContain(incomingParentSpanId);
 
-    assertThat(spanExporter.getExportedSpans())
-        .anySatisfy(
-            span -> {
-              assertThat(span.getTraceId()).isEqualTo(incomingTraceId);
-              assertThat(span.getParentSpanId()).isEqualTo(incomingParentSpanId);
-            });
+    org.awaitility.Awaitility.await()
+        .atMost(java.time.Duration.ofSeconds(3))
+        .untilAsserted(
+            () ->
+                assertThat(spanExporter.getExportedSpans())
+                    .anySatisfy(
+                        span -> {
+                          assertThat(span.getTraceId()).isEqualTo(incomingTraceId);
+                          assertThat(span.getParentSpanId()).isEqualTo(incomingParentSpanId);
+                        }));
   }
 
   @Test
@@ -188,10 +200,19 @@ class GatewayRoutingAndTracingIntegrationTest {
         .contains("\"path\":\"/catalog\"")
         .contains(customerTraceId);
 
+    String staffSessionId =
+        team.ylab.gateway.test.TestSessionHelper.createAuthenticatedSession(
+            sessionManager,
+            "staff",
+            "supervisor_test",
+            java.util.List.of("WAREHOUSE_SUPERVISOR"),
+            "test-token");
+
     EntityExchangeResult<String> staffResult =
         webTestClient
             .get()
             .uri("/staff/skus")
+            .cookie("SESSION", staffSessionId)
             .exchange()
             .expectStatus()
             .isOk()

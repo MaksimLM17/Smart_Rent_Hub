@@ -41,7 +41,13 @@ public class GatewayRoutingConfig {
 
     return builder
         .routes()
-        .route("inventory-api", r -> r.order(-10).path(INVENTORY_API_PATHS).uri(inventoryUri))
+        .route(
+            "inventory-api",
+            r ->
+                r.order(-10)
+                    .path(INVENTORY_API_PATHS)
+                    .filters(f -> f.tokenRelay())
+                    .uri(inventoryUri))
         .route(
             "staff-web",
             r ->
