@@ -1,6 +1,8 @@
 package team.ylab.gateway.config;
 
 import java.net.URI;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +10,8 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configures Spring Cloud Gateway routes for single-origin routing to {@code inventory}, {@code
- * staff-web}, and {@code customer-web} (SDD v1.1 Section 4.1, Appendix B).
+ * staff-web}, and {@code customer-web} with TokenRelay and Redis rate limiting (SDD v1.1 Section
+ * 4.1, 7.2, Appendix B).
  */
 @Configuration
 public class GatewayRoutingConfig {
@@ -34,7 +37,10 @@ public class GatewayRoutingConfig {
 
   @Bean
   public RouteLocator gatewayRouteLocator(
-      RouteLocatorBuilder builder, SrhGatewayProperties gatewayProperties) {
+      RouteLocatorBuilder builder,
+      SrhGatewayProperties gatewayProperties,
+      RedisRateLimiter redisRateLimiter,
+      KeyResolver keyResolver) {
     String inventoryUri = gatewayProperties.getRoutes().getInventoryUri();
     String staffWebUri = gatewayProperties.getRoutes().getStaffWebUri();
     String customerWebUri = gatewayProperties.getRoutes().getCustomerWebUri();
@@ -46,7 +52,18 @@ public class GatewayRoutingConfig {
             r ->
                 r.order(-10)
                     .path(INVENTORY_API_PATHS)
-                    .filters(f -> f.tokenRelay())
+                    .filters(
+                        f -> {
+                          f.tokenRelay();
+                          if (gatewayProperties.getRateLimit().isEnabled()) {
+                            f.requestRateLimiter(
+                                c ->
+                                    c.setRateLimiter(redisRateLimiter)
+                                        .setKeyResolver(keyResolver)
+                                        .setThrowOnLimit(true));
+                          }
+                          return f;
+                        })
                     .uri(inventoryUri))
         .route(
             "staff-web",
