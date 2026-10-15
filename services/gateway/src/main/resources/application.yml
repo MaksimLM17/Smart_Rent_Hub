@@ -64,6 +64,7 @@ srh:
       inventory-uri: ${INVENTORY_SERVICE_URI:http://localhost:8082}
       customer-web-uri: ${CUSTOMER_WEB_URI:forward:/__stub/customer-web}
       staff-web-uri: ${STAFF_WEB_URI:forward:/__stub/staff-web}
+      websocket-uri: ${WEBSOCKET_SERVICE_URI:ws://localhost:8085}
     session:
       redis-enabled: ${SRH_REDIS_SESSION_ENABLED:true}
       timeout: ${SRH_SESSION_TIMEOUT:8h}

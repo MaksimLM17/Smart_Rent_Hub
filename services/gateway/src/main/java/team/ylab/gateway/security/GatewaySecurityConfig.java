@@ -100,6 +100,17 @@ public class GatewaySecurityConfig {
                     // Staff web UI and Staff API paths require authentication
                     .pathMatchers("/staff", "/staff/**", "/api/v1/staff/**")
                     .authenticated()
+                    // WebSocket and streaming endpoints require authentication (SDD v1.1 Section
+                    // 4.1, Appendix B)
+                    .pathMatchers(
+                        "/ws/staff",
+                        "/ws/staff/**",
+                        "/ws/echo",
+                        "/ws/echo/**",
+                        "/ws/secured/**",
+                        "/api/v1/sse/**",
+                        "/api/v1/events/**")
+                    .authenticated()
                     // Customer authenticated paths
                     .pathMatchers(
                         "/orders/**",

@@ -28,8 +28,11 @@ public class CustomAuthenticationEntryPoint implements ServerAuthenticationEntry
     ServerHttpRequest request = exchange.getRequest();
     String path = request.getURI().getPath();
     String accept = request.getHeaders().getFirst(HttpHeaders.ACCEPT);
+    boolean isWebSocketUpgrade = "websocket".equalsIgnoreCase(request.getHeaders().getUpgrade());
 
     if (path.startsWith("/api/")
+        || path.startsWith("/ws/")
+        || isWebSocketUpgrade
         || (accept != null && accept.contains(MediaType.APPLICATION_JSON_VALUE))) {
       ServerHttpResponse response = exchange.getResponse();
       response.setStatusCode(HttpStatus.UNAUTHORIZED);
