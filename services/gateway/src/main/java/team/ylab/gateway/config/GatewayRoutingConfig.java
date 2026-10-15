@@ -44,6 +44,7 @@ public class GatewayRoutingConfig {
     String inventoryUri = gatewayProperties.getRoutes().getInventoryUri();
     String staffWebUri = gatewayProperties.getRoutes().getStaffWebUri();
     String customerWebUri = gatewayProperties.getRoutes().getCustomerWebUri();
+    String websocketUri = gatewayProperties.getRoutes().getWebsocketUri();
 
     return builder
         .routes()
@@ -65,6 +66,13 @@ public class GatewayRoutingConfig {
                           return f;
                         })
                     .uri(inventoryUri))
+        .route(
+            "staff-websocket",
+            r ->
+                r.order(-8)
+                    .path("/ws/staff", "/ws/staff/**", "/ws/downstream/**")
+                    .filters(f -> f.tokenRelay())
+                    .uri(websocketUri))
         .route(
             "staff-web",
             r ->

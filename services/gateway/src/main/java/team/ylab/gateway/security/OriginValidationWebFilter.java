@@ -54,7 +54,12 @@ public class OriginValidationWebFilter implements WebFilter {
 
     boolean isWebSocketUpgrade = "websocket".equalsIgnoreCase(request.getHeaders().getUpgrade());
 
-    if (!isMutating && !isWebSocketUpgrade) {
+    boolean isEventStream =
+        request.getHeaders().getAccept().stream()
+                .anyMatch(mediaType -> mediaType.isCompatibleWith(MediaType.TEXT_EVENT_STREAM))
+            || request.getPath().value().startsWith("/api/v1/sse");
+
+    if (!isMutating && !isWebSocketUpgrade && !isEventStream) {
       return chain.filter(exchange);
     }
 
