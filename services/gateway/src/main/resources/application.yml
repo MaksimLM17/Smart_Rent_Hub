@@ -76,6 +76,24 @@ srh:
       customer-login-redirect-uri: /
       staff-login-redirect-uri: /staff
       logout-success-uri: /
+      csrf:
+        enabled: ${SRH_CSRF_ENABLED:true}
+        cookie-name: XSRF-TOKEN
+        header-name: X-XSRF-TOKEN
+        cookie-same-site: Lax
+        cookie-path: /
+        allowed-origins:
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+          - "http://127.0.0.1:3000"
+          - "http://127.0.0.1:3001"
+    rate-limit:
+      enabled: ${SRH_RATE_LIMIT_ENABLED:true}
+      replenish-rate: ${SRH_RATE_LIMIT_REPLENISH_RATE:50}
+      burst-capacity: ${SRH_RATE_LIMIT_BURST_CAPACITY:100}
+      requested-tokens: 1
+      include-headers: true
+      fail-open: true
 
 smartrent:
   observability:

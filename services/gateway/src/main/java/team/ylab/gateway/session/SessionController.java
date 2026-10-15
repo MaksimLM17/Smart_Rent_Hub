@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,8 +20,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- * Controller providing session state inspection for frontend UI applications ({@code customer-web}
- * and {@code staff-web}) behind the Gateway BFF (SDD v1.1 Appendix B.2, B.3).
+ * Controller providing session state inspection and CSRF token metadata for frontend UI
+ * applications ({@code customer-web} and {@code staff-web}) behind the Gateway BFF (SDD v1.1
+ * Appendix B.2, B.3, Section 4.1).
  *
  * <p>Never exposes sensitive OAuth2 tokens (access tokens, refresh tokens, client secrets) to the
  * client.
@@ -30,15 +33,34 @@ public class SessionController {
 
   @GetMapping(value = "/session", produces = MediaType.APPLICATION_JSON_VALUE)
   public Mono<Map<String, Object>> getSession(ServerWebExchange exchange) {
-    return exchange
-        .getPrincipal()
-        .filter(Authentication.class::isInstance)
-        .cast(Authentication.class)
-        .map(this::buildAuthenticatedResponse)
-        .defaultIfEmpty(Map.of("authenticated", false));
+    Mono<Optional<CsrfToken>> csrfTokenMono =
+        exchange
+            .<Mono<CsrfToken>>getAttributeOrDefault(CsrfToken.class.getName(), Mono.empty())
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty());
+
+    return csrfTokenMono.flatMap(
+        csrfOpt ->
+            exchange
+                .getPrincipal()
+                .filter(Authentication.class::isInstance)
+                .cast(Authentication.class)
+                .map(auth -> buildAuthenticatedResponse(auth, csrfOpt.orElse(null)))
+                .defaultIfEmpty(buildUnauthenticatedResponse(csrfOpt.orElse(null))));
   }
 
-  private Map<String, Object> buildAuthenticatedResponse(Authentication authentication) {
+  private Map<String, Object> buildUnauthenticatedResponse(CsrfToken csrf) {
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("authenticated", false);
+    if (csrf != null && csrf.getToken() != null && !csrf.getToken().isEmpty()) {
+      response.put("csrfToken", csrf.getToken());
+      response.put("csrfHeaderName", csrf.getHeaderName());
+    }
+    return response;
+  }
+
+  private Map<String, Object> buildAuthenticatedResponse(
+      Authentication authentication, CsrfToken csrf) {
     Map<String, Object> response = new LinkedHashMap<>();
     response.put("authenticated", true);
 
@@ -48,6 +70,11 @@ public class SessionController {
     }
     response.put("registrationId", registrationId);
     response.put("username", authentication.getName());
+
+    if (csrf != null && csrf.getToken() != null && !csrf.getToken().isEmpty()) {
+      response.put("csrfToken", csrf.getToken());
+      response.put("csrfHeaderName", csrf.getHeaderName());
+    }
 
     if (authentication.getPrincipal() instanceof OAuth2User oauth2User) {
       Map<String, Object> attributes = oauth2User.getAttributes();

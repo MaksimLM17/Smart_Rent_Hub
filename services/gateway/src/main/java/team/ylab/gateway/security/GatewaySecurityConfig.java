@@ -2,6 +2,8 @@ package team.ylab.gateway.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
@@ -13,13 +15,16 @@ import org.springframework.security.oauth2.client.web.server.ServerOAuth2Authori
 import org.springframework.security.oauth2.client.web.server.WebSessionServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.logout.WebSessionServerLogoutHandler;
+import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import team.ylab.gateway.config.SrhGatewayProperties;
 
 /**
  * Reactive security configuration for Gateway acting as the Backend-For-Frontend (BFF).
  *
  * <p>Configures OAuth2 login (Keycloak), server-side session management (Redis), logout handling,
- * and authorized client management for downstream {@code TokenRelay} (SDD v1.1 Section 4.1, 9.1).
+ * double-submit cookie CSRF hardening for Single Page Applications, and authorized client
+ * management for downstream {@code TokenRelay} (SDD v1.1 Section 4.1, 9.1, 9.7).
  */
 @Configuration(proxyBeanMethods = false)
 @EnableWebFluxSecurity
@@ -32,10 +37,46 @@ public class GatewaySecurityConfig {
       ReactiveClientRegistrationRepository clientRegistrationRepository,
       ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
 
-    http
-        // CSRF hardening is implemented in task T3.3
-        .csrf(ServerHttpSecurity.CsrfSpec::disable)
-        .authorizeExchange(
+    // Configure double-submit cookie CSRF protection for SPA / mutating API requests
+    CookieServerCsrfTokenRepository csrfTokenRepository =
+        CookieServerCsrfTokenRepository.withHttpOnlyFalse();
+    csrfTokenRepository.setCookieName(gatewayProperties.getSecurity().getCsrf().getCookieName());
+    csrfTokenRepository.setHeaderName(gatewayProperties.getSecurity().getCsrf().getHeaderName());
+    csrfTokenRepository.setCookiePath(gatewayProperties.getSecurity().getCsrf().getCookiePath());
+    csrfTokenRepository.setCookieCustomizer(
+        cookieBuilder ->
+            cookieBuilder
+                .sameSite(gatewayProperties.getSecurity().getCsrf().getCookieSameSite())
+                .path(gatewayProperties.getSecurity().getCsrf().getCookiePath())
+                .httpOnly(false));
+
+    ServerWebExchangeMatcher requireCsrfMatcher =
+        exchange -> {
+          ServerHttpRequest request = exchange.getRequest();
+          HttpMethod method = request.getMethod();
+          // Safe methods do not require CSRF
+          if (method == HttpMethod.GET
+              || method == HttpMethod.HEAD
+              || method == HttpMethod.OPTIONS
+              || method == HttpMethod.TRACE) {
+            return ServerWebExchangeMatcher.MatchResult.notMatch();
+          }
+          // Mutating methods on /api/** require CSRF token
+          String path = request.getURI().getPath();
+          if (path.startsWith("/api/")) {
+            return ServerWebExchangeMatcher.MatchResult.match();
+          }
+          return ServerWebExchangeMatcher.MatchResult.notMatch();
+        };
+
+    http.csrf(
+        csrf ->
+            csrf.csrfTokenRepository(csrfTokenRepository)
+                .requireCsrfProtectionMatcher(requireCsrfMatcher)
+                .csrfTokenRequestHandler(new SpaServerCsrfTokenRequestHandler())
+                .accessDeniedHandler(new CustomAccessDeniedHandler()));
+
+    http.authorizeExchange(
             exchanges ->
                 exchanges
                     // Observability & Actuator
@@ -85,7 +126,9 @@ public class GatewaySecurityConfig {
                     .logoutSuccessHandler(new CustomServerLogoutSuccessHandler(gatewayProperties)))
         .exceptionHandling(
             exceptions ->
-                exceptions.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
+                exceptions
+                    .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                    .accessDeniedHandler(new CustomAccessDeniedHandler()));
 
     return http.build();
   }
