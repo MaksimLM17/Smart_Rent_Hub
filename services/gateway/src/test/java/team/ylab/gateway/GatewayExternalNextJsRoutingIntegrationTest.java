@@ -79,7 +79,11 @@ class GatewayExternalNextJsRoutingIntegrationTest {
     registry.add(
         "srh.gateway.routes.staff-web-uri",
         () -> "http://127.0.0.1:" + staffWebServer.getAddress().getPort());
+    registry.add("srh.gateway.session.redis-enabled", () -> "false");
   }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  private org.springframework.web.server.session.WebSessionManager sessionManager;
 
   @AfterAll
   static void stopServers() {
@@ -116,10 +120,19 @@ class GatewayExternalNextJsRoutingIntegrationTest {
     assertThat(customerRes.getResponseBody()).contains("\"upstream\":\"customer-web-nextjs\"");
     assertThat(customerWebTraceId.get()).isEqualTo(cTrace);
 
+    String staffSessionId =
+        team.ylab.gateway.test.TestSessionHelper.createAuthenticatedSession(
+            sessionManager,
+            "staff",
+            "operator_test",
+            java.util.List.of("WAREHOUSE_OPERATOR"),
+            "test-token");
+
     EntityExchangeResult<String> staffRes =
         webTestClient
             .get()
             .uri("/staff/orders")
+            .cookie("SESSION", staffSessionId)
             .exchange()
             .expectStatus()
             .isOk()

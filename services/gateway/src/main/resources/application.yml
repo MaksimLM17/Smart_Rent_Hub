@@ -8,12 +8,74 @@ spring:
     compatibility-verifier:
       enabled: false
 
+  # Reactive Redis connection
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  # Spring Session via Redis
+  session:
+    store-type: redis
+    redis:
+      namespace: spring:session
+    timeout: ${SRH_SESSION_TIMEOUT:28800s}
+
+  # OAuth2 Client (BFF)
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_AUTH_URI:http://localhost:8081/realms/smartrent/protocol/openid-connect/auth}
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8081/realms/smartrent/protocol/openid-connect/token}
+            jwk-set-uri: ${KEYCLOAK_JWK_URI:http://localhost:8081/realms/smartrent/protocol/openid-connect/certs}
+            user-info-uri: ${KEYCLOAK_USERINFO_URI:http://localhost:8081/realms/smartrent/protocol/openid-connect/userinfo}
+            user-name-attribute: preferred_username
+        registration:
+          customer:
+            provider: keycloak
+            client-id: srh-customer
+            client-secret: ${SRH_CUSTOMER_CLIENT_SECRET:srh-customer-secret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/customer"
+            scope:
+              - openid
+              - profile
+              - email
+              - roles
+          staff:
+            provider: keycloak
+            client-id: srh-staff
+            client-secret: ${SRH_STAFF_CLIENT_SECRET:srh-staff-secret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/staff"
+            scope:
+              - openid
+              - profile
+              - email
+              - roles
+
 srh:
   gateway:
     routes:
       inventory-uri: ${INVENTORY_SERVICE_URI:http://localhost:8082}
       customer-web-uri: ${CUSTOMER_WEB_URI:forward:/__stub/customer-web}
       staff-web-uri: ${STAFF_WEB_URI:forward:/__stub/staff-web}
+    session:
+      redis-enabled: ${SRH_REDIS_SESSION_ENABLED:true}
+      timeout: ${SRH_SESSION_TIMEOUT:8h}
+      staff-timeout: ${SRH_STAFF_SESSION_TIMEOUT:12h}
+      cookie-name: SESSION
+      cookie-secure: ${SRH_SESSION_COOKIE_SECURE:false}
+      cookie-same-site: Lax
+      cookie-path: /
+    security:
+      customer-login-redirect-uri: /
+      staff-login-redirect-uri: /staff
+      logout-success-uri: /
 
 smartrent:
   observability:
