@@ -38,47 +38,43 @@ public class GatewaySecurityConfig {
       ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
 
     // Configure double-submit cookie CSRF protection for SPA / mutating API requests
-    if (gatewayProperties.getSecurity().getCsrf().isEnabled()) {
-      CookieServerCsrfTokenRepository csrfTokenRepository =
-          CookieServerCsrfTokenRepository.withHttpOnlyFalse();
-      csrfTokenRepository.setCookieName(gatewayProperties.getSecurity().getCsrf().getCookieName());
-      csrfTokenRepository.setHeaderName(gatewayProperties.getSecurity().getCsrf().getHeaderName());
-      csrfTokenRepository.setCookiePath(gatewayProperties.getSecurity().getCsrf().getCookiePath());
-      csrfTokenRepository.setCookieCustomizer(
-          cookieBuilder ->
-              cookieBuilder
-                  .sameSite(gatewayProperties.getSecurity().getCsrf().getCookieSameSite())
-                  .path(gatewayProperties.getSecurity().getCsrf().getCookiePath())
-                  .httpOnly(false));
+    CookieServerCsrfTokenRepository csrfTokenRepository =
+        CookieServerCsrfTokenRepository.withHttpOnlyFalse();
+    csrfTokenRepository.setCookieName(gatewayProperties.getSecurity().getCsrf().getCookieName());
+    csrfTokenRepository.setHeaderName(gatewayProperties.getSecurity().getCsrf().getHeaderName());
+    csrfTokenRepository.setCookiePath(gatewayProperties.getSecurity().getCsrf().getCookiePath());
+    csrfTokenRepository.setCookieCustomizer(
+        cookieBuilder ->
+            cookieBuilder
+                .sameSite(gatewayProperties.getSecurity().getCsrf().getCookieSameSite())
+                .path(gatewayProperties.getSecurity().getCsrf().getCookiePath())
+                .httpOnly(false));
 
-      ServerWebExchangeMatcher requireCsrfMatcher =
-          exchange -> {
-            ServerHttpRequest request = exchange.getRequest();
-            HttpMethod method = request.getMethod();
-            // Safe methods do not require CSRF
-            if (method == HttpMethod.GET
-                || method == HttpMethod.HEAD
-                || method == HttpMethod.OPTIONS
-                || method == HttpMethod.TRACE) {
-              return ServerWebExchangeMatcher.MatchResult.notMatch();
-            }
-            // Mutating methods on /api/** require CSRF token
-            String path = request.getURI().getPath();
-            if (path.startsWith("/api/")) {
-              return ServerWebExchangeMatcher.MatchResult.match();
-            }
+    ServerWebExchangeMatcher requireCsrfMatcher =
+        exchange -> {
+          ServerHttpRequest request = exchange.getRequest();
+          HttpMethod method = request.getMethod();
+          // Safe methods do not require CSRF
+          if (method == HttpMethod.GET
+              || method == HttpMethod.HEAD
+              || method == HttpMethod.OPTIONS
+              || method == HttpMethod.TRACE) {
             return ServerWebExchangeMatcher.MatchResult.notMatch();
-          };
+          }
+          // Mutating methods on /api/** require CSRF token
+          String path = request.getURI().getPath();
+          if (path.startsWith("/api/")) {
+            return ServerWebExchangeMatcher.MatchResult.match();
+          }
+          return ServerWebExchangeMatcher.MatchResult.notMatch();
+        };
 
-      http.csrf(
-          csrf ->
-              csrf.csrfTokenRepository(csrfTokenRepository)
-                  .requireCsrfProtectionMatcher(requireCsrfMatcher)
-                  .csrfTokenRequestHandler(new SpaServerCsrfTokenRequestHandler())
-                  .accessDeniedHandler(new CustomAccessDeniedHandler()));
-    } else {
-      http.csrf(ServerHttpSecurity.CsrfSpec::disable);
-    }
+    http.csrf(
+        csrf ->
+            csrf.csrfTokenRepository(csrfTokenRepository)
+                .requireCsrfProtectionMatcher(requireCsrfMatcher)
+                .csrfTokenRequestHandler(new SpaServerCsrfTokenRequestHandler())
+                .accessDeniedHandler(new CustomAccessDeniedHandler()));
 
     http.authorizeExchange(
             exchanges ->
