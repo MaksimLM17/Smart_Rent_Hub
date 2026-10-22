@@ -44,6 +44,7 @@
         <micrometer-tracing.version>1.7.0</micrometer-tracing.version>
         <opentelemetry.version>1.62.0</opentelemetry.version>
         <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
+        <archunit.version>1.4.0</archunit.version>
     </properties>
 
     <dependencyManagement>
@@ -167,6 +168,14 @@
                 <artifactId>logstash-logback-encoder</artifactId>
                 <version>${logstash-logback-encoder.version}</version>
             </dependency>
+
+            <!-- ArchUnit -->
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -198,6 +207,7 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

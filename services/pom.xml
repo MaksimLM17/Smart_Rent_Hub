@@ -18,5 +18,6 @@
 
     <modules>
         <module>gateway</module>
+        <module>inventory</module>
     </modules>
 </project>
