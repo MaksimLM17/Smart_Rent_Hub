@@ -1,0 +1,65 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: inventory
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${INVENTORY_DB_NAME:inventory}
+    username: ${INVENTORY_DB_USERNAME:inventory_app}
+    password: ${INVENTORY_DB_PASSWORD:inventory_app_pass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 25
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    user: ${INVENTORY_DB_OWNER:}
+    password: ${INVENTORY_DB_OWNER_PASSWORD:}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/smartrent}
+
+srh:
+  security:
+    enabled: true
+    public-endpoints:
+      - /actuator/**
+      - /api/v1/catalog/**
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /swagger-ui.html
+
+smartrent:
+  observability:
+    service-name: inventory
+    tracing:
+      otlp:
+        endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    team.ylab.inventory: INFO

@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-init-outbox-tables.sql
+  - include:
+      file: db/changelog/changes/002-init-inventory-tables.sql

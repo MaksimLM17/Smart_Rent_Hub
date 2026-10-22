@@ -30,6 +30,7 @@ import team.ylab.security.sod.SodPolicyEnforcer;
  */
 @AutoConfiguration(
     beforeName = {
+      "org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration",
       "org.springframework.boot.autoconfigure.security.servlet.SpringBootWebSecurityConfiguration",
       "org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration"
     })
