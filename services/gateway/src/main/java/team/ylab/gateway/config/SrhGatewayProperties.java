@@ -39,6 +39,12 @@ public class SrhGatewayProperties {
      * stub ({@code forward:/__stub/staff-web}) until the Next.js server is running.
      */
     private String staffWebUri = "forward:/__stub/staff-web";
+
+    /**
+     * Target base URI for the WebSocket service (e.g. {@code notification-live}). Defaults to
+     * {@code ws://localhost:8085}.
+     */
+    private String websocketUri = "ws://localhost:8085";
   }
 
   @Data

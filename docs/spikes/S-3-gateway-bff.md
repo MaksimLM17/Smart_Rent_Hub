@@ -75,7 +75,9 @@
 | **(i) Валидация Origin и Referer** | **ДА (Успешно)** | Мутирующие запросы с `Origin` или `Referer`, не входящими в доверенный список (`allowed-origins` или собственный Host шлюза), немедленно блокируются фильтром `OriginValidationWebFilter` с HTTP 403 (`type: urn:problem:csrf:forbidden-origin`). |
 | **(j) Redis Rate Limiting (Token Bucket)** | **ДА (Успешно)** | Запросы к `inventory-api` ограничиваются токен-бакетом. Превышение лимита возвращает 429 Too Many Requests с телом RFC 9457 и полным набором заголовков `X-RateLimit-Remaining: 0`, `X-RateLimit-Replenish-Rate`, `X-RateLimit-Burst-Capacity`. |
 | **(k) Многоуровневый KeyResolver** | **ДА (Успешно)** | Изоляция лимитов: `user:<username>` для аутентифицированных, `session:<id>` для пользователей с сессией, `ip:<clientIp>` для анонимных обращений (с поддержкой `X-Forwarded-For`). |
-| **(l) Rate Limiter Fail-Open** | **ДА (Успешно)** | При отказе соединения с Redis или ошибке выполнения Lua-скрипта `RedisRateLimiter` переходит в fail-open режим (`allowed=true`), предотвращая деградацию доступности downstream-сервисов. |
+| **(m) WebSocket по cookie сессии и Origin** | **ДА (Успешно)** | Рукопожатие `/ws/echo` и `/ws/staff` без cookie `SESSION` отклоняется с HTTP 401 Unauthorized (`application/problem+json`). Запросы с запрещенным `Origin` (например `http://malicious-site.com`) блокируются `OriginValidationWebFilter` с HTTP 403 Forbidden. Аутентифицированное соединение с разрешенным Origin успешно устанавливается (HTTP 101 Switching Protocols), эхо-канал принимает и возвращает текстовые фреймы. |
+| **(n) SSE-потоки по cookie сессии и Origin** | **ДА (Успешно)** | Запрос к `GET /api/v1/sse/stream` без cookie сессии отклоняется с 401 Unauthorized, а с запрещенным `Origin` — с 403 Forbidden. При наличии валидной сессии возвращается `text/event-stream` с последовательностью событий `srh.notification` (id, event, data с seq, username, timestamp). Поддерживается возобновление потока через заголовок `Last-Event-ID`. Эндпоинт `GET /api/v1/sse/echo` возвращает одиночное событие с эхом сообщения и контекстом пользователя. |
+| **(o) TokenRelay для WebSocket к downstream** | **ДА (Успешно)** | При маршрутизации WebSocket-трафика к downstream-сервисам (`/ws/staff/**` -> `websocketUri` / `notification-live`) фильтр `TokenRelay` извлекает токен доступа из серверной сессии Redis и инжектирует заголовок `Authorization: Bearer <accessToken>` в рукопожатие к downstream WebSocket-серверу, обеспечивая прозрачную сквозную авторизацию без раскрытия токенов клиенту. |
 
 ---
 
@@ -101,16 +103,20 @@
    - *Проблема:* Конструктор `DefaultCsrfToken` валидирует `Assert.hasLength(token, "token cannot be null or empty")`. Попытка инициализации константы с пустой строкой приводит к `ExceptionInInitializerError` при старте `SessionController`.
    - *Решение:* Использование `Optional<CsrfToken>` с безопасной проверкой `Optional::isPresent` без создания фиктивных пустых токенов.
 
+6. **Преждевременное завершение outbound-потока в реактивном WebSocket-клиенте:**
+   - *Проблема:* Использование `session.send(Mono.just(...))` в обработчике клиента немедленно завершает outbound-поток после отправки сообщения, из-за чего Netty инициирует закрытие сессии до того, как клиент успевает прочитать входящий эхо-фрейм (`Connection prematurely closed BEFORE opening handshake is complete`).
+   - *Решение:* Удержание outbound-потока открытым с помощью `.concatWith(Mono.never())` и синхронизация завершения сессии через `Mono.firstWithSignal(receive, send)` после получения целевого количества входящих фреймов.
+
 ---
 
 ## Решение
 
 1. **Утверждаем связку Spring Cloud Gateway + Spring Security 7.1 Reactive + Spring Session Redis** как стандартную реализацию BFF для Smart Rent Hub.
 2. **Архитектурные требования для SDD / ADR:**
-   - Доступ фронтенд-приложений (`customer-web`, `staff-web`) к API разрешен строго через единый Origin Gateway с передачей сессионной cookie `SESSION`. Прямое хранение JWT в `localStorage` или cookie браузера запрещено.
-   - Внутренние микросервисы (`inventory`, `booking` и др.) настраиваются как OAuth2 Resource Server и проверяют Bearer JWT, проброшенный Gateway через фильтр `TokenRelay`.
+   - Доступ фронтенд-приложений (`customer-web`, `staff-web`) к API, WebSocket и SSE-потокам разрешен строго через единый Origin Gateway с передачей сессионной cookie `SESSION`. Прямое хранение JWT в `localStorage` или cookie браузера запрещено.
+   - Внутренние микросервисы (`inventory`, `notification-live` и др.) настраиваются как OAuth2 Resource Server и проверяют Bearer JWT, проброшенный Gateway через фильтр `TokenRelay` (включая рукопожатия WebSocket).
    - Все мутирующие API-запросы (`POST`, `PUT`, `DELETE`, `PATCH` на `/api/**`) защищаются по схеме Double-Submit Cookie: клиент передает токен из cookie `XSRF-TOKEN` в заголовке `X-XSRF-TOKEN` (или `X-CSRF-TOKEN`).
-   - Заголовки `Origin` и `Referer` валидируются шлюзом перед пропуском мутирующих запросов. Запросы с недоверенным Origin отклоняются с HTTP 403 Problem Details.
+   - Заголовки `Origin` и `Referer` валидируются шлюзом перед пропуском мутирующих запросов, WebSocket-рукопожатий и SSE-стримов. Запросы с недоверенным Origin отклоняются с HTTP 403 Problem Details (`urn:problem:csrf:forbidden-origin`).
    - Rate Limiting на Gateway использует алгоритм Token Bucket в Redis с многоуровневым ключом (`user:`, `session:`, `ip:`) и политикой Fail-Open при сбоях Redis.
    - Все ошибки шлюза (401 Unauthorized, 403 Forbidden, 429 Too Many Requests, 500 Failure) возвращаются строго в формате RFC 9457 `application/problem+json` с включением `traceId`.
 
@@ -118,4 +124,4 @@
 
 ## Что остаётся неясным
 
-- Поддержка WebSocket и SSE-потоков по cookie сессии с валидацией `Origin` (будет исследована и реализована в задаче T3.4).
+- Все вопросы спайка S-3 (OAuth2, Session in Redis, TokenRelay, CSRF, Rate Limiting, WebSocket, SSE) полностью исследованы, реализованы и подтверждены 40 интеграционными тестами. Невыясненных архитектурных вопросов по BFF нет. Спайк S-3 успешно завершён.
