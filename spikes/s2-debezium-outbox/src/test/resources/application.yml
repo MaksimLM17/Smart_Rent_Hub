@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: spike-s2-debezium-outbox
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false

@@ -20,6 +20,7 @@
         <module>infra</module>
         <module>load-tests</module>
         <module>spikes/s1-operaton</module>
+        <module>spikes/s2-debezium-outbox</module>
     </modules>
 
     <properties>
